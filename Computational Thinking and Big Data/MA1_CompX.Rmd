@@ -1,0 +1,148 @@
+---
+title: "MajorAssignment1"
+author: "NgTri_2901"
+date: "2023-02-13"
+output: html_document
+---
+
+
+```{r}
+library(tidyverse)
+library(lubridate)
+library(ggplot2)
+library(dplyr)
+library(nycflights13)
+```
+
+```{r}
+data("flights")
+data("airlines")
+#view(flights)
+```
+```{r}
+table(flights$origin)
+```
+
+```{r}
+origin_counts <- table(flights$origin)
+barplot(origin_counts, main = "Frequency of Flight Origins", xlab = "Origin", ylab = "Frequency", col = "blue")
+```
+
+```{r}
+distance_mean <- mean(flights$distance)
+distance_sd <- sd(flights$distance)
+
+print(paste("Mean:", distance_mean))
+print(paste("Standard deviation:", distance_sd))
+```
+```{r}
+hist(flights$distance)
+```
+
+```{r}
+ggplot(data = flights, aes(x = distance, y = air_time)) +
+  geom_point(color = "blue", alpha = 0.5) +
+  xlab("Distance (miles)") +
+  ylab("Air time (minutes)") +
+  ggtitle("Scatterplot of Air Time vs Distance") 
+```
+```{r}
+plot(air_time~ distance, data = flights,
+      main = "Scatterplot of Air Time vs Distance",
+     xlab = "Distance (miles)", ylab = "Air time (minutes)")
+abline(lm(air_time ~ distance, data = flights), col = "blue")
+```
+
+
+```{r}
+table(flights$carrier, flights$origin)
+```
+```{r}
+#Conditional table of carrier and origin 
+aa_flights <- flights[flights$carrier == "AA",]
+jfk_aa_flights <- aa_flights[aa_flights$origin == "JFK",]
+table(aa_flights$carrier, aa_flights$origin)
+#percentage of AA departing from JFK
+percentage_jfk_aa_flights <- 100 * nrow(jfk_aa_flights) / nrow(aa_flights)
+percentage_jfk_aa_flights
+```
+```{r}
+origin_ordered <- with(flights, reorder(origin, distance, median))
+ggplot(data = flights, aes(x = origin_ordered, y = distance)) +
+  geom_boxplot() +
+  xlab("Origin") +
+  ylab("Distance (miles)") +
+  ggtitle("Boxplots of Distance for Each Origin")
+```
+```{r}
+median_distance <- flights %>%
+  group_by(origin) %>%
+  summarize(median_distance = median(distance))
+median_distance
+```
+
+```{r}
+# Filter flights data for JFK departures in May 2013
+jfk_flights_may <- flights[flights$origin == "JFK" & flights$month == 5,]
+
+# Calculate number of flights from JFK in May 2013
+nrow(jfk_flights_may)
+```
+
+```{r}
+# Find the minimum date in the dataset
+min <- min(flights$time_hour)
+
+# Filter the first flight of 2013
+first_flight <- filter(flights, time_hour==min)
+
+# Extract the carrier and origin of the first flight
+carrier <- first_flight$carrier[1]
+origin <- first_flight$origin[1]
+print(paste("Carrier:",carrier))
+print(paste("Airport:",origin))
+```
+```{r}
+# Calculate the total distance traveled in miles
+total_distance_miles <- sum(flights$distance)
+
+total_distance_meters <- total_distance_miles * 1609.34
+total_distance_meters
+```
+```{r}
+#Join 
+flights_name = merge(x=flights,y=airlines,by="carrier",all=TRUE)
+#Find ‘Inc’ in name
+flights_inc<- filter(flights_name, str_detect(name, "Inc.")) 
+#Calculate the total distance traveled in miles
+total_distance_inc=sum(flights_inc$distance)
+total_distance_inc
+```
+```{r}
+mean_distance <- mean(flights$distance)
+sd_distance <- sd(flights$distance)
+max_distance <- max(flights$distance)
+z_score <- (max_distance - mean_distance) / sd_distance
+z_score
+
+```
+```{r}
+# Calculate the standard error of the mean
+n <- length(flights$distance)
+se_mean_distance <- sd_distance / sqrt(n)
+# Calculate the 95% confidence interval for the mean distance
+t <- qt(p = 0.025, df = n-1, lower.tail = FALSE)
+lower_ci <- mean_distance - t * se_mean_distance
+upper_ci <- mean_distance + t * se_mean_distance
+# Print the results
+cat("We are 95% confident that the mean distance lies between the following two points (in miles): [",lower_ci,",", upper_ci,"]")
+```
+```{r}
+flights %>% 
+  group_by(carrier) %>% 
+  summarise(mean_distance = mean(distance), 
+            lower = mean_distance - qt(0.975, n() - 1) * sd(distance) / sqrt(n()),
+            upper = mean_distance + qt(0.975, n() - 1) * sd(distance) / sqrt(n())) %>%
+  select(carrier, mean_distance, lower, upper) 
+```
+
